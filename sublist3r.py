@@ -476,14 +476,13 @@ class BaiduEnum(enumratorBaseThreaded):
         links = list()
         found_newdomain = False
         subdomain_list = []
-        link_regx = re.compile('<a.*?class="c-showurl".*?>(.*?)</a>')
+        # link_regx = re.compile('<a.*?class="c-showurl".*?>(.*?)</a>')
+        link_regx = re.compile(r"http[s]?://www.baidu.com/link\?url=(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
         try:
             links = link_regx.findall(resp)
-            for link in links:
-                link = re.sub('<.*?>|>|<|&nbsp;', '', link)
-                if not link.startswith('http'):
-                    link = "http://" + link
-                subdomain = urlparse.urlparse(link).netloc
+            for link in set(links):
+                link_response = self.session.get(link, headers=self.headers, timeout=self.timeout)
+                subdomain = urlparse.urlparse(link_response.url).netloc
                 if subdomain.endswith(self.domain):
                     subdomain_list.append(subdomain)
                     if subdomain not in self.subdomains and subdomain != self.domain:
@@ -518,6 +517,7 @@ class BaiduEnum(enumratorBaseThreaded):
         else:
             query = "site:{domain} -site:www.{domain}".format(domain=self.domain)
         return query
+
 
 
 class NetcraftEnum(enumratorBaseThreaded):
